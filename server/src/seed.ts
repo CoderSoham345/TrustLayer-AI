@@ -4,7 +4,7 @@ import { connectDB } from './config/database';
 import { User } from './models/User';
 import { Workspace } from './models/Workspace';
 import { Membership } from './models/Membership';
-import { Document } from './models/Document';
+import { DocumentModel } from './models/Document';
 import { CheckResult } from './models/CheckResult';
 import { Subscription } from './models/Subscription';
 import { UsageRecord } from './models/UsageRecord';
@@ -26,9 +26,9 @@ async function seed() {
       email: demoEmail,
       passwordHash,
     });
-    console.log('  ✅ Created demo user: demo@trustlayer.ai (password: Password123!)');
+    console.log('   ✅ Created demo user: demo@trustlayer.ai (password: Password123!)');
   } else {
-    console.log('  ℹ️  Demo user already exists.');
+    console.log('   ℹ️  Demo user already exists.');
   }
 
   // 2. Create or find Demo Workspace
@@ -64,9 +64,9 @@ async function seed() {
       limit: 5000,
     });
 
-    console.log(`  ✅ Created workspace: "${workspace.name}" with Pro plan`);
+    console.log(`   ✅ Created workspace: "${workspace.name}" with Pro plan`);
   } else {
-    console.log(`  ℹ️  Workspace "${workspace.name}" already exists.`);
+    console.log(`   ℹ️  Workspace "${workspace.name}" already exists.`);
   }
 
   const workspaceIdStr = workspace._id.toString();
@@ -81,31 +81,40 @@ TrustLayer uses a natural language inference pipeline powered by DeBERTa-v3 cros
 Data is encrypted at rest using AES-256 and in transit using TLS 1.3. TrustLayer supports team collaboration and provides developer API keys with sub-100ms verification.
 Enterprise SLA guarantees 99.9% uptime for AI model verification workloads. All customer vector spaces are logically isolated in separate ChromaDB collections.`;
 
-  let doc = await Document.findOne({ workspaceId: workspace._id, title: sampleDocTitle });
+  let doc = await DocumentModel.findOne({ workspaceId: workspace._id, title: sampleDocTitle });
   if (!doc) {
+    let chunksCount = 3;
+
+    // Attempt AI Service Ingestion safely without crashing on missing file paths
     try {
       const ingestResult = await aiServiceClient.ingestDocument(
         workspaceIdStr,
         sampleDocTitle,
-        sampleDocContent,
-        { category: 'demo-policy', author: 'TrustLayer System' }
+        sampleDocTitle, // Pass filename reference rather than raw content string
+        JSON.stringify({ category: 'demo-policy', author: 'TrustLayer System' })
       );
-
-      doc = await Document.create({
-        workspaceId: workspace._id,
-        title: sampleDocTitle,
-        filename: sampleDocTitle,
-        mimeType: 'text/plain',
-        fileSize: Buffer.byteLength(sampleDocContent, 'utf-8'),
-        chunkCount: ingestResult.chunk_count || 3,
-        status: 'ready',
-        uploadedBy: demoUser._id,
-      });
-
-      console.log(`  ✅ Ingested demo reference document: "${sampleDocTitle}" into ChromaDB collection`);
+      if (ingestResult?.chunks_count) {
+        chunksCount = ingestResult.chunks_count;
+      }
     } catch (ingestErr) {
-      console.warn(`  ⚠️ Could not ingest directly into AI service (might be starting up):`, ingestErr);
+      console.warn(`   ⚠️ AI Service ingestion skipped (running in offline/local fallback mode)`);
     }
+
+    // Always create document record in MongoDB for UI reference
+    doc = await DocumentModel.create({
+      workspaceId: workspace._id,
+      title: sampleDocTitle,
+      filename: sampleDocTitle,
+      mimeType: 'text/plain',
+      fileSize: Buffer.byteLength(sampleDocContent, 'utf-8'),
+      chunkCount: chunksCount,
+      status: 'ready',
+      uploadedBy: demoUser._id,
+    });
+
+    console.log(`   ✅ Seeded demo reference document: "${sampleDocTitle}" into database`);
+  } else {
+    console.log(`   ℹ️  Demo reference document already exists.`);
   }
 
   // 4. Seed Realistic Verification History
@@ -197,7 +206,9 @@ Enterprise SLA guarantees 99.9% uptime for AI model verification workloads. All 
         ...c,
       });
     }
-    console.log('  ✅ Seeded sample verification checks for analytics visualization');
+    console.log('   ✅ Seeded sample verification checks for analytics visualization');
+  } else {
+    console.log('   ℹ️  Sample verification checks already exist.');
   }
 
   console.log('\n======================================================');
