@@ -2,7 +2,6 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { z } from 'zod';
 
-// Load .env explicitly from server root
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const envSchema = z.object({
@@ -10,7 +9,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(5001),
   MONGO_URI: z.string().default('mongodb://127.0.0.1:27017/trustlayer'),
   AI_SERVICE_URL: z.string().default('http://127.0.0.1:8001'),
-  JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters long').default('super_secret_production_ready_jwt_key_at_least_32_chars_12345'),
+  JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters long'),
   JWT_EXPIRES_IN: z.string().default('7d'),
   UPLOAD_DIR: z.string().default('./uploads'),
   MAX_FILE_SIZE_MB: z.coerce.number().default(25),
@@ -19,7 +18,6 @@ const envSchema = z.object({
   RAZORPAY_WEBHOOK_SECRET: z.string().default('rzp_test_mock_webhook_secret'),
 });
 
-// Alias MONGODB_URI to MONGO_URI if present in environment
 const rawEnv = {
   ...process.env,
   MONGO_URI: process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/trustlayer',
