@@ -25,6 +25,7 @@ jobs:
               '### 📋 What happens next?',
               '- A maintainer will review your issue shortly.',
               '- Please make sure to attach any relevant context, screenshots, or error logs if applicable.',
+              '- **Open Source Programs:** If you are participating in **Winter of Code Social (WoCS)** or **Nexus Spring of Code (NSoC)**, please mention your program in a comment below!',
               '- **Important:** Please do not open a Pull Request until a maintainer officially assigns this issue to you!',
               '',
               'Thank you for contributing to **TrustLayer AI**! 🚀',

@@ -26,7 +26,8 @@ jobs:
               "### 📋 What's next?",
               '- A maintainer will review your Pull Request shortly.',
               '- Please make sure your branch is up to date with `main` and that all automated CI checks pass.',
-              '- In the PR description, please reference the issue (e.g., `Closes #<issue_number>`).',
+              '- If this PR addresses an existing issue, please reference it in your description (e.g., `Closes #<issue_number>`).',
+              '- **Open Source Programs:** If contributing for **Winter of Code Social (WoCS)** or **Nexus Spring of Code (NSoC)**, please ensure your program name is mentioned in the PR description for tracking.',
               '',
               'Thank you for contributing to **TrustLayer AI**! 🚀',
             ].join('\n');
