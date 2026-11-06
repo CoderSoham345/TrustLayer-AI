@@ -19,19 +19,21 @@ jobs:
           script: |
             const prAuthor = context.payload.pull_request.user.login;
             const prNumber = context.payload.pull_request.number;
-            const body = `👋 Thanks for opening this Pull Request, @${prAuthor}!
 
-### 📋 What's next?
-- A maintainer will review your Pull Request shortly.
-- Please make sure your branch is up to date with \`main\` and that all automated CI checks pass.
-- In the PR, please reference it in your description (e.g., \`Closes #<issue_number>\`).
-
-Thank you for contributing to **TrustLayer AI**! 🚀`;
+            const body = [
+              `👋 Thanks for opening this Pull Request, @${prAuthor}!`,
+              '',
+              "### 📋 What's next?",
+              '- A maintainer will review your Pull Request shortly.',
+              '- Please make sure your branch is up to date with `main` and that all automated CI checks pass.',
+              '- In the PR description, please reference the issue (e.g., `Closes #<issue_number>`).',
+              '',
+              'Thank you for contributing to **TrustLayer AI**! 🚀',
+            ].join('\n');
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
-              body: body
+              body,
             });
-
