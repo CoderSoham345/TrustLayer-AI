@@ -12,6 +12,17 @@ This project adheres to the [Contributor Covenant](CODE_OF_CONDUCT.md). By parti
 
 ---
 
+## 🎓 Open Source Programs (WoCS / NSoC Contributors)
+
+TrustLayer AI proudly participates in open-source programs including **Winter of Code Social (WoCS)** and **Nexus Spring of Code (NSoC)**!
+
+If you are contributing as part of one of these programs:
+- **When requesting an issue assignment:** Please explicitly state your program in your comment (e.g. `I would like to work on this issue for Winter of Code Social (WoCS)` or `Nexus Spring of Code (NSoC)`).
+- **When creating a Pull Request:** Specify your program name at the top of your PR description so maintainers can properly review, track, and credit your contributions.
+- **Wait for assignment:** Please do not submit a Pull Request for an issue until a maintainer has officially assigned it to you.
+
+---
+
 ## Development Setup
 
 > [!TIP]
@@ -101,13 +112,14 @@ TrustLayer is organized as a modular microservices monorepo:
 ## Pull Request Guidelines
 
 1. **Keep PRs focused:** Submit smaller, focused pull requests addressing a single bug or feature.
-2. **Write tests:** Ensure all tests pass before submitting.
-3. **Follow commit conventions:**
+2. **Mention Program Participation:** If you are a contributor for **Winter of Code Social (WoCS)** or **Nexus Spring of Code (NSoC)**, please note this in your PR description.
+3. **Write tests:** Ensure all tests pass before submitting.
+4. **Follow commit conventions:**
    - `feat: add Pinecone vector store adapter`
    - `fix: correct regex pattern for decimal numbers in sentence chunker`
    - `docs: update DEPLOY.md with Let's Encrypt instructions`
    - `refactor: optimize claim scoring threshold`
-4. **Link issues:** Reference related issues in the PR description (e.g., `Fixes #12`).
+5. **Link issues:** Reference related issues in the PR description (e.g., `Fixes #12`).
 
 ---
 

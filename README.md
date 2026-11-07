@@ -175,9 +175,9 @@ For complete instructions on deploying to an Ubuntu VPS, configuring DNS, and se
 
 ## 🤝 Contributing
 
-We welcome open-source contributions!
+We welcome open-source contributions! TrustLayer AI participates in programs like **Winter of Code Social (WoCS)** and **Nexus Spring of Code (NSoC)**.
 - 👉 **[Contributor Setup Guide (CONTRIBUTOR_SETUP.md)](CONTRIBUTOR_SETUP.md)**: Step-by-step local development setup with live hot-reloading.
-- 📖 **[Contributing Guidelines (CONTRIBUTING.md)](CONTRIBUTING.md)**: Coding standards, branch naming, and pull request checklist.
+- 📖 **[Contributing Guidelines (CONTRIBUTING.md)](CONTRIBUTING.md)**: Coding standards, branch naming, program participation details, and pull request checklist.
 - 🛡️ **[Code of Conduct (CODE_OF_CONDUCT.md)](CODE_OF_CONDUCT.md)**: Community standards and participant expectations.
 
 ---
