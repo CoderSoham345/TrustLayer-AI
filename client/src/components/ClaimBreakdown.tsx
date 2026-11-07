@@ -1,6 +1,14 @@
-import React from 'react';
-import { Quote, Sparkles, AlertCircle, FileSearch } from 'lucide-react';
+'use client';
+
+import React, { useState } from 'react';
+import { Quote, Sparkles, AlertCircle, FileSearch, Copy, Check, Download, Braces } from 'lucide-react';
 import { VerdictBadge } from './VerdictBadge';
+import {
+  buildExportPayload,
+  formatResultAsText,
+  copyToClipboard,
+  downloadJson,
+} from '@/lib/exportResult';
 
 export interface Claim {
   claim: string;
@@ -19,15 +27,74 @@ interface ClaimBreakdownProps {
   claims: Claim[];
   overallVerdict?: string;
   reliabilityScore?: number;
+  question?: string;
+  answer?: string;
+  checkId?: string;
 }
 
-export function ClaimBreakdown({ claims, overallVerdict, reliabilityScore }: ClaimBreakdownProps) {
+export function ClaimBreakdown({ claims, overallVerdict, reliabilityScore, question, answer, checkId, }: ClaimBreakdownProps) {
+  const [copied, setCopied] = useState<'text' | 'json' | 'error' | null>(null);
   if (!claims || claims.length === 0) {
     return null;
   }
 
+  const result = { question, answer, overallVerdict, reliabilityScore, claims };
+
+  const flash = (v: 'text' | 'json' | 'error') => {
+    setCopied(v);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const handleCopy = async (kind: 'text' | 'json') => {
+    const text =
+      kind === 'text'
+        ? formatResultAsText(result)
+        : JSON.stringify(buildExportPayload(result), null, 2);
+    flash((await copyToClipboard(text)) ? kind : 'error');
+  };
+
+  const handleDownload = () =>
+    downloadJson(buildExportPayload(result), `trustlayer-check-${checkId ?? Date.now()}.json`);
+
   return (
     <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+        <span role="status" aria-live="polite" className="text-xs text-slate-400 mr-1">
+          {copied === 'text' && 'Summary copied!'}
+          {copied === 'json' && 'JSON copied!'}
+          {copied === 'error' && 'Copy failed'}
+        </span>
+
+        <button
+          type="button"
+          onClick={() => handleCopy('text')}
+          aria-label="Copy result summary to clipboard"
+          className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors border border-indigo-500/20"
+        >
+          {copied === 'text' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+          <span>Copy</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleCopy('json')}
+          aria-label="Copy result as JSON to clipboard"
+          className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors border border-indigo-500/20"
+        >
+          {copied === 'json' ? <Check className="w-3.5 h-3.5" /> : <Braces className="w-3.5 h-3.5" />}
+          <span>Copy JSON</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleDownload}
+          aria-label="Download result as a JSON file"
+          className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors border border-indigo-500/20"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span>Download JSON</span>
+        </button>
+      </div>
       {reliabilityScore !== undefined && (
         <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/90 border border-slate-800">
           <div className="flex items-center gap-3">

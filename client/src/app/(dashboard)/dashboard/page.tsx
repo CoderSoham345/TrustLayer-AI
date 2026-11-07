@@ -315,6 +315,9 @@ export default function DashboardOverviewPage() {
               claims={selectedCheck.claims}
               overallVerdict={selectedCheck.overallVerdict}
               reliabilityScore={selectedCheck.reliabilityScore}
+              question={selectedCheck.question}
+              answer={selectedCheck.answer}
+              checkId={selectedCheck._id}
             />
 
             <div className="pt-4 border-t border-slate-800 flex justify-end">

@@ -1,0 +1,40 @@
+name: PR Welcome Comment
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  welcome-pr-comment:
+    name: Post PR Welcome Comment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add welcome comment on PR creation
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prAuthor = context.payload.pull_request.user.login;
+            const prNumber = context.payload.pull_request.number;
+
+            const body = [
+              `👋 Thanks for opening this Pull Request, @${prAuthor}!`,
+              '',
+              "### 📋 What's next?",
+              '- A maintainer will review your Pull Request shortly.',
+              '- Please make sure your branch is up to date with `main` and that all automated CI checks pass.',
+              '- If this PR addresses an existing issue, please reference it in your description (e.g., `Closes #<issue_number>`).',
+              '- **Open Source Programs:** If contributing for **Winter of Code Social (WoCS)** or **Nexus Spring of Code (NSoC)**, please ensure your program name is mentioned in the PR description for tracking.',
+              '',
+              'Thank you for contributing to **TrustLayer AI**! 🚀',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body,
+            });

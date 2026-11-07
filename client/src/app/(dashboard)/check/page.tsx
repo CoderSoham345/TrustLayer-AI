@@ -28,6 +28,7 @@ export default function CheckPlaygroundPage() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [submitted, setSubmitted] = useState<{ question: string; answer: string } | null>(null);
 
   // Quick test demo templates
   const loadPreset = (type: 'supported' | 'contradicted') => {
@@ -63,6 +64,7 @@ export default function CheckPlaygroundPage() {
         regenerate,
       });
       setResult(data);
+      setSubmitted({ question: question.trim(), answer: answer.trim() });
       refreshWorkspace();
     } catch (err: any) {
       setError(err.message || 'Failed to verify answer');
@@ -249,6 +251,9 @@ export default function CheckPlaygroundPage() {
                 claims={result.claims}
                 overallVerdict={result.overallVerdict}
                 reliabilityScore={result.reliabilityScore}
+                question={result.question ?? submitted?.question}
+                answer={result.answer ?? submitted?.answer}
+                checkId={result._id}
               />
             </div>
           )}

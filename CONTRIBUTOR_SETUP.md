@@ -212,5 +212,6 @@ docker compose -f docker-compose.dev.yml exec server npm run seed
 
 ## 🤝 Next Steps
 - Pick an issue labeled [`good-first-issue`](https://github.com/sabeenaviklar/TrustLayer-AI/labels/good-first-issue) or check the levels in [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Participating in Open Source Programs?** If you are contributing for **Winter of Code Social (WoCS)** or **Nexus Spring of Code (NSoC)**, please mention your program when requesting an issue assignment and in your PR description.
 - Create a feature branch: `git checkout -b feature/my-feature-name`.
 - Have questions? Feel free to ask directly in your issue thread!
