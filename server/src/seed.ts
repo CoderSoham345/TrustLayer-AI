@@ -23,9 +23,7 @@ async function seed(): Promise<void> {
     // 1. Create or find Demo User
     const demoEmail = 'demo@trustlayer.ai';
 
-    let demoUser = await User.findOne({
-      email: demoEmail,
-    });
+    let demoUser = await User.findOne({ email: demoEmail });
 
     if (!demoUser) {
       const salt = await bcrypt.genSalt(10);
@@ -43,9 +41,7 @@ async function seed(): Promise<void> {
     }
 
     // 2. Create or find Demo Workspace
-    let workspace = await Workspace.findOne({
-      ownerId: demoUser._id,
-    });
+    let workspace = await Workspace.findOne({ ownerId: demoUser._id });
 
     if (!workspace) {
       workspace = await Workspace.create({
@@ -116,29 +112,31 @@ Enterprise SLA guarantees 99.9% uptime for AI model verification workloads. All 
         uploadedBy: demoUser._id,
       });
 
-      try {
-        await writeFile(tempFilePath, sampleDocContent, 'utf-8');
+      if (doc) {
+        try {
+          await writeFile(tempFilePath, sampleDocContent, 'utf-8');
 
-        const ingestResult = await aiServiceClient.ingestDocument(
-          workspaceIdStr,
-          doc._id.toString(),
-          tempFilePath,
-          sampleDocTitle
-        );
+          const ingestResult = await aiServiceClient.ingestDocument(
+            workspaceIdStr,
+            doc._id.toString(),
+            tempFilePath,
+            sampleDocTitle
+          );
 
-        doc.status = 'indexed';
-        doc.chunksCount = ingestResult?.chunks_count || 3;
-        await doc.save();
+          doc.status = 'indexed';
+          doc.chunksCount = ingestResult?.chunks_count || 3;
+          await doc.save();
 
-        console.log(`   ✅ Ingested demo reference document: "${sampleDocTitle}"`);
-      } catch (ingestErr) {
-        console.warn('   ⚠️ AI Service ingestion failed, falling back to database seed:', ingestErr);
+          console.log(`   ✅ Ingested demo reference document: "${sampleDocTitle}"`);
+        } catch (ingestErr) {
+          console.warn('   ⚠️ AI Service ingestion failed, applying fallback:', ingestErr);
 
-        doc.status = 'indexed';
-        doc.chunksCount = 3;
-        await doc.save();
-      } finally {
-        await unlink(tempFilePath).catch(() => {});
+          doc.status = 'indexed';
+          doc.chunksCount = 3;
+          await doc.save();
+        } finally {
+          await unlink(tempFilePath).catch(() => {});
+        }
       }
     } else {
       console.log('   ℹ️ Demo reference document already exists.');
