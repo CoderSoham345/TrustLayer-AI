@@ -1,10 +1,13 @@
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { connectDB } from './config/database';
 import { User } from './models/User';
 import { Workspace } from './models/Workspace';
 import { Membership } from './models/Membership';
-import { Document } from './models/Document';
+import { DocumentModel } from './models/Document';
 import { CheckResult } from './models/CheckResult';
 import { Subscription } from './models/Subscription';
 import { UsageRecord } from './models/UsageRecord';
@@ -81,30 +84,44 @@ TrustLayer uses a natural language inference pipeline powered by DeBERTa-v3 cros
 Data is encrypted at rest using AES-256 and in transit using TLS 1.3. TrustLayer supports team collaboration and provides developer API keys with sub-100ms verification.
 Enterprise SLA guarantees 99.9% uptime for AI model verification workloads. All customer vector spaces are logically isolated in separate ChromaDB collections.`;
 
-  let doc = await Document.findOne({ workspaceId: workspace._id, title: sampleDocTitle });
+  let doc = await DocumentModel.findOne({ workspaceId: workspace._id, title: sampleDocTitle });
   if (!doc) {
+    // The AI service ingests from a file upload, so write the sample content to a temp file
+    const tempFilePath = path.join(os.tmpdir(), `trustlayer-seed-${Date.now()}-${sampleDocTitle}`);
+    fs.writeFileSync(tempFilePath, sampleDocContent, 'utf-8');
+
+    doc = await DocumentModel.create({
+      workspaceId: workspace._id,
+      title: sampleDocTitle,
+      filename: sampleDocTitle,
+      originalName: sampleDocTitle,
+      mimeType: 'text/plain',
+      sizeBytes: Buffer.byteLength(sampleDocContent, 'utf-8'),
+      status: 'processing',
+      uploadedBy: demoUser._id,
+    });
+
     try {
       const ingestResult = await aiServiceClient.ingestDocument(
         workspaceIdStr,
-        sampleDocTitle,
-        sampleDocContent,
-        { category: 'demo-policy', author: 'TrustLayer System' }
+        doc._id.toString(),
+        tempFilePath,
+        sampleDocTitle
       );
 
-      doc = await Document.create({
-        workspaceId: workspace._id,
-        title: sampleDocTitle,
-        filename: sampleDocTitle,
-        mimeType: 'text/plain',
-        fileSize: Buffer.byteLength(sampleDocContent, 'utf-8'),
-        chunkCount: ingestResult.chunk_count || 3,
-        status: 'ready',
-        uploadedBy: demoUser._id,
-      });
+      doc.status = 'indexed';
+      doc.chunksCount = ingestResult.chunks_count;
+      doc.charactersCount = ingestResult.characters_count;
+      await doc.save();
 
       console.log(`  ✅ Ingested demo reference document: "${sampleDocTitle}" into ChromaDB collection`);
     } catch (ingestErr) {
+      // Remove the placeholder so the next seed run retries ingestion
+      await DocumentModel.deleteOne({ _id: doc._id });
+      doc = null;
       console.warn(`  ⚠️ Could not ingest directly into AI service (might be starting up):`, ingestErr);
+    } finally {
+      fs.rmSync(tempFilePath, { force: true });
     }
   }
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { api } from '@/lib/api';
+import { api, downloadFile } from '@/lib/api';
 import { VerdictBadge } from '@/components/VerdictBadge';
 import { ClaimBreakdown } from '@/components/ClaimBreakdown';
 import {
@@ -16,6 +16,7 @@ import {
   Loader2,
   Calendar,
   AlertTriangle,
+  Download,
 } from 'lucide-react';
 
 interface CheckItem {
@@ -42,6 +43,33 @@ export default function HistoryPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [selectedCheck, setSelectedCheck] = useState<CheckItem | null>(null);
+  const [exporting, setExporting] = useState<'csv' | 'json' | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportTruncatedRows, setExportTruncatedRows] = useState<number | null>(null);
+
+  const handleExport = async (format: 'csv' | 'json') => {
+    if (!workspace || exporting) return;
+    try {
+      setExporting(format);
+      setExportError(null);
+      setExportTruncatedRows(null);
+      const queryParams = new URLSearchParams({ format });
+      if (verdictFilter !== 'ALL') {
+        queryParams.append('verdict', verdictFilter);
+      }
+      const result = await downloadFile(
+        `/v1/workspaces/${workspace.id}/checks/export?${queryParams.toString()}`,
+        `trustlayer-checks.${format}`
+      );
+      if (result.truncated) {
+        setExportTruncatedRows(result.rowCount ?? 10000);
+      }
+    } catch (err: any) {
+      setExportError(err.message || 'Export failed. Please try again.');
+    } finally {
+      setExporting(null);
+    }
+  };
 
   const fetchHistory = async () => {
     if (!workspace) return;
@@ -89,26 +117,86 @@ export default function HistoryPage() {
           </p>
         </div>
 
-        {/* Verdict Filter Buttons */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 self-start sm:self-auto">
-          {['ALL', 'SUPPORTED', 'CONTRADICTED', 'UNVERIFIABLE'].map((v) => (
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {/* Verdict Filter Buttons */}
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+            {['ALL', 'SUPPORTED', 'CONTRADICTED', 'UNVERIFIABLE'].map((v) => (
+              <button
+                key={v}
+                onClick={() => {
+                  setVerdictFilter(v);
+                  setPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  verdictFilter === v
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+
+          {/* Export Buttons */}
+          {(['csv', 'json'] as const).map((format) => (
             <button
-              key={v}
-              onClick={() => {
-                setVerdictFilter(v);
-                setPage(1);
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                verdictFilter === v
-                  ? 'bg-indigo-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              key={format}
+              onClick={() => handleExport(format)}
+              disabled={!workspace || exporting !== null}
+              className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {v}
+              {exporting === format ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Download className="w-3.5 h-3.5" />
+              )}
+              <span>{exporting === format ? 'Exporting...' : `Export ${format.toUpperCase()}`}</span>
             </button>
           ))}
         </div>
       </div>
+
+      {exportError && (
+        <div
+          role="alert"
+          className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center justify-between gap-3"
+        >
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>Export failed: {exportError}</span>
+          </div>
+          <button
+            onClick={() => setExportError(null)}
+            aria-label="Dismiss export error"
+            className="p-1 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {exportTruncatedRows !== null && (
+        <div
+          role="status"
+          className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs flex items-center justify-between gap-3"
+        >
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>
+              Export was capped at the newest {exportTruncatedRows.toLocaleString()} checks. Older checks
+              matching this filter were not included.
+            </span>
+          </div>
+          <button
+            onClick={() => setExportTruncatedRows(null)}
+            aria-label="Dismiss export warning"
+            className="p-1 rounded-lg text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* History Table */}
       <div className="glass-panel rounded-2xl border border-slate-800 overflow-hidden">
